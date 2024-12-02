@@ -45,6 +45,20 @@ impl Input {
     }
 }
 
+fn is_vec_safe(vec: &[usize]) -> bool {
+    let mut sense: Option<bool> = None;
+    vec.windows(2).all(|s| {
+        let [i1, i2]: [usize; 2] = s.try_into().unwrap();
+        let sense_value = sense.get_or_insert(i1 < i2);
+        let diff = if *sense_value {
+            i2 as isize - i1 as isize
+        } else {
+            i1 as isize - i2 as isize
+        };
+        (1..=3).contains(&diff)
+    })
+}
+
 fn main() -> Result<()> {
     start_day(DAY);
 
@@ -53,18 +67,7 @@ fn main() -> Result<()> {
         let input: Input = Input::parse(reader)?;
         let mut res = 0;
         for vec in input.list {
-            let mut sense: Option<bool> = None;
-            let b = vec.windows(2).all(|s| {
-                let [i1, i2]: [usize; 2] = s.try_into().unwrap();
-                let sense_value = sense.get_or_insert(i1 < i2);
-                let diff = if *sense_value {
-                    i2 as isize - i1 as isize
-                } else {
-                    i1 as isize - i2 as isize
-                };
-                (1..=3).contains(&diff)
-            });
-            if b {
+            if is_vec_safe(&vec) {
                 res += 1;
             }
         }
@@ -80,27 +83,32 @@ fn main() -> Result<()> {
     //endregion
 
     //region Part 2
-    // println!("\n=== Part 2 ===");
+    println!("\n=== Part 2 ===");
 
-    // fn part2<R: BufRead>(reader: R) -> Result<usize> {
-    //     let input: Input = Input::parse(reader)?;
-    //     let mut occurrences_by_int = HashMap::new();
-    //     for &i in &input.list2 {
-    //         *occurrences_by_int.entry(i).or_insert(0) += 1;
-    //     }
-    //     let res = input
-    //         .list1
-    //         .iter()
-    //         .map(|&i| i * (*occurrences_by_int.get(&i).unwrap_or(&0)))
-    //         .sum();
-    //     Ok(res)
-    // }
+    fn part2<R: BufRead>(reader: R) -> Result<usize> {
+        let input: Input = Input::parse(reader)?;
+        let mut res = 0;
+        for vec in input.list {
+            if is_vec_safe(&vec) {
+                res += 1;
+                continue;
+            }
+            for i in 0..vec.len() {
+                let test_slice = [&vec[..i], &vec[i + 1..]].concat();
+                if is_vec_safe(&test_slice) {
+                    res += 1;
+                    break;
+                }
+            }
+        }
+        Ok(res)
+    }
 
-    // assert_eq!(31, part2(BufReader::new(TEST.as_bytes()))?);
+    assert_eq!(4, part2(BufReader::new(TEST.as_bytes()))?);
 
-    // let input_file = BufReader::new(File::open(INPUT_FILE)?);
-    // let result = time_snippet!(part2(input_file)?);
-    // println!("Result = {}", result);
+    let input_file = BufReader::new(File::open(INPUT_FILE)?);
+    let result = time_snippet!(part2(input_file)?);
+    println!("Result = {}", result);
     //endregion
 
     Ok(())
