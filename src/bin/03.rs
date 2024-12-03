@@ -22,7 +22,7 @@ impl Input {
     }
 }
 
-const REGEX: &str = r"mul\((\d{1,3}),(\d{1,3})\)";
+const REGEX: &str = r"mul\((\d+),(\d+)\)";
 
 fn compute(slice: &str, regex: &Regex) -> usize {
     regex
