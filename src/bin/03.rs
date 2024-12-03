@@ -7,7 +7,7 @@ use std::fs::File;
 use std::io::{BufRead, BufReader};
 
 #[derive(Default, Clone, Debug, PartialEq, Eq)]
-struct Input(Vec<String>); // TODO
+struct Input(String); // TODO
 
 impl Input {
     fn parse<R: BufRead>(reader: R) -> Result<Self> {
@@ -15,11 +15,20 @@ impl Input {
 
         for line in reader.lines() {
             let line = line?;
-            input.0.push(line);
+            input.0.push_str(&line);
         }
 
         Ok(input)
     }
+}
+
+const REGEX: &str = r"mul\((\d{1,3}),(\d{1,3})\)";
+
+fn compute(slice: &str, regex: &Regex) -> usize {
+    regex
+        .captures_iter(slice)
+        .map(|c| c[1].parse::<usize>().unwrap() * c[2].parse::<usize>().unwrap())
+        .sum::<usize>()
 }
 
 const DAY: &str = "03";
@@ -27,6 +36,9 @@ const INPUT_FILE: &str = concatcp!("input/", DAY, ".txt");
 
 const TEST: &str = "\
 xmul(2,4)%&mul[3,7]!@^do_not_mul(5,5)+mul(32,64]then(mul(11,8)mul(8,5))
+";
+const TEST2: &str = "\
+xmul(2,4)&mul[3,7]!^don't()_mul(5,5)+mul(32,64](mul(11,8)undo()?mul(8,5))
 ";
 
 fn main() -> Result<()> {
@@ -38,13 +50,8 @@ fn main() -> Result<()> {
     fn part1<R: BufRead>(reader: R) -> Result<usize> {
         let input: Input = Input::parse(reader)?;
         let mut res = 0;
-        let regex: Regex = Regex::new(r"mul\((\d{1,3}),(\d{1,3})\)").unwrap();
-        for string in input.0 {
-            res += regex
-                .captures_iter(&string)
-                .map(|c| c[1].parse::<usize>().unwrap() * c[2].parse::<usize>().unwrap())
-                .sum::<usize>();
-        }
+        let regex = Regex::new(REGEX).unwrap();
+        res += compute(&input.0, &regex);
         Ok(res)
     }
 
@@ -56,20 +63,24 @@ fn main() -> Result<()> {
     //endregion
 
     //region Part 2
-    // println!("\n=== Part 2 ===");
-    //
-    // fn part2<R: BufRead>(reader: R) -> Result<usize> {
-    //    let input: Input = Input::parse(reader)?;
-    //    let mut res = 0;
-    //    // TODO
-    //    Ok(res)
-    // }
-    //
-    // assert_eq!(0, part2(BufReader::new(TEST.as_bytes()))?);
-    //
-    // let input_file = BufReader::new(File::open(INPUT_FILE)?);
-    // let result = time_snippet!(part2(input_file)?);
-    // println!("Result = {}", result);
+    println!("\n=== Part 2 ===");
+
+    fn part2<R: BufRead>(reader: R) -> Result<usize> {
+        let input: Input = Input::parse(reader)?;
+        let regex = Regex::new(REGEX).unwrap();
+        let res = input
+            .0
+            .split("do()")
+            .map(|s| compute(&s[..s.find("don't()").unwrap_or(s.len())], &regex))
+            .sum::<usize>();
+        Ok(res)
+    }
+
+    assert_eq!(48, part2(BufReader::new(TEST2.as_bytes()))?);
+
+    let input_file = BufReader::new(File::open(INPUT_FILE)?);
+    let result = time_snippet!(part2(input_file)?);
+    println!("Result = {}", result);
     //endregion
 
     Ok(())
