@@ -2,12 +2,12 @@ use adv_code_2024::*;
 use anyhow::*;
 use code_timing_macros::time_snippet;
 use const_format::concatcp;
+use regex::Regex;
 use std::fs::File;
 use std::io::{BufRead, BufReader};
 
-// TODO
 #[derive(Default, Clone, Debug, PartialEq, Eq)]
-struct Input(Vec<Vec<usize>>); // TODO
+struct Input(Vec<String>); // TODO
 
 impl Input {
     fn parse<R: BufRead>(reader: R) -> Result<Self> {
@@ -15,26 +15,19 @@ impl Input {
 
         for line in reader.lines() {
             let line = line?;
-
-            // Split line to obtain a record
-            // TODO
-            let vec = line
-                .split_whitespace()
-                .map(|s| s.parse::<usize>().unwrap())
-                .collect::<Vec<_>>();
-            input.0.push(vec);
+            input.0.push(line);
         }
 
         Ok(input)
     }
 }
 
-const DAY: &str = "NN"; // TODO: Fill the day
+const DAY: &str = "03";
 const INPUT_FILE: &str = concatcp!("input/", DAY, ".txt");
 
 const TEST: &str = "\
-<TEST-INPUT>
-"; // TODO: Add the test input
+xmul(2,4)%&mul[3,7]!@^do_not_mul(5,5)+mul(32,64]then(mul(11,8)mul(8,5))
+";
 
 fn main() -> Result<()> {
     start_day(DAY);
@@ -43,14 +36,19 @@ fn main() -> Result<()> {
     println!("=== Part 1 ===");
 
     fn part1<R: BufRead>(reader: R) -> Result<usize> {
-        let _input: Input = Input::parse(reader)?;
-        let mut _res = 0;
-        // TODO
-        Ok(_res)
+        let input: Input = Input::parse(reader)?;
+        let mut res = 0;
+        let regex: Regex = Regex::new(r"mul\((\d{1,3}),(\d{1,3})\)").unwrap();
+        for string in input.0 {
+            res += regex
+                .captures_iter(&string)
+                .map(|c| c[1].parse::<usize>().unwrap() * c[2].parse::<usize>().unwrap())
+                .sum::<usize>();
+        }
+        Ok(res)
     }
 
-    // TODO: Set the expected answer for the test input
-    assert_eq!(0, part1(BufReader::new(TEST.as_bytes()))?);
+    assert_eq!(161, part1(BufReader::new(TEST.as_bytes()))?);
 
     let input_file = BufReader::new(File::open(INPUT_FILE)?);
     let result = time_snippet!(part1(input_file)?);
