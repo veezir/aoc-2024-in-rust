@@ -1,9 +1,34 @@
+use adv_code_2024::*;
 use anyhow::*;
-use std::fs::File;
-use std::io::{BufRead, BufReader};
 use code_timing_macros::time_snippet;
 use const_format::concatcp;
-use adv_code_2024::*;
+use std::fs::File;
+use std::io::{BufRead, BufReader};
+
+// TODO
+#[derive(Default, Clone, Debug, PartialEq, Eq)]
+struct Input(Vec<Vec<usize>>); // TODO
+
+impl Input {
+
+    fn parse<R: BufRead>(reader: R) -> Result<Self> {
+        let mut input = Input::default();
+
+        for line in reader.lines() {
+            let line = line?;
+
+            // Split line to obtain a record
+            // TODO
+            let vec = line
+                .split_whitespace()
+                .map(|s| s.parse::<usize>().unwrap())
+                .collect::<Vec<_>>();
+            input.0.push(vec);
+        }
+
+        Ok(input)
+    }
+}
 
 const DAY: &str = "NN"; // TODO: Fill the day
 const INPUT_FILE: &str = concatcp!("input/", DAY, ".txt");
@@ -19,9 +44,10 @@ fn main() -> Result<()> {
     println!("=== Part 1 ===");
 
     fn part1<R: BufRead>(reader: R) -> Result<usize> {
-        // TODO: Solve Part 1 of the puzzle
-        let answer = reader.lines().flatten().count();
-        Ok(answer)
+        let _input: Input = Input::parse(reader)?;
+        let mut _res = 0;
+        // TODO
+        Ok(_res)
     }
 
     // TODO: Set the expected answer for the test input
@@ -36,7 +62,10 @@ fn main() -> Result<()> {
     // println!("\n=== Part 2 ===");
     //
     // fn part2<R: BufRead>(reader: R) -> Result<usize> {
-    //     Ok(0)
+    //    let input: Input = Input::parse(reader)?;
+    //    let mut res = 0;
+    //    // TODO
+    //    Ok(res)
     // }
     //
     // assert_eq!(0, part2(BufReader::new(TEST.as_bytes()))?);
