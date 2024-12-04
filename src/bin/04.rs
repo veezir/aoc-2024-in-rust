@@ -41,6 +41,11 @@ MAMMMXMMMM
 MXMXAXMASX
 ";
 
+fn count_in_sequence(seq: &[char]) -> usize {
+    let s = seq.iter().collect::<String>();
+    s.matches(XMAS).count() + s.matches(XMAS2).count()
+}
+
 fn main() -> Result<()> {
     start_day(DAY);
 
@@ -52,11 +57,6 @@ fn main() -> Result<()> {
 
         let n = input.0.len();
         let m = input.0[0].len();
-
-        let count_in_sequence = |seq: &[char]| {
-            let s = seq.iter().collect::<String>();
-            s.matches(XMAS).count() + s.matches(XMAS2).count()
-        };
 
         let row_count: usize = input.0.iter().map(|row| count_in_sequence(row)).sum();
 
@@ -103,7 +103,6 @@ fn main() -> Result<()> {
         Ok(row_count + col_count + diag_desc_count + diag_asc_count)
     }
 
-    // TODO: Set the expected answer for the test input
     assert_eq!(18, part1(BufReader::new(TEST.as_bytes()))?);
 
     let input_file = BufReader::new(File::open(INPUT_FILE)?);
@@ -112,20 +111,45 @@ fn main() -> Result<()> {
     //endregion
 
     //region Part 2
-    // println!("\n=== Part 2 ===");
-    //
-    // fn part2<R: BufRead>(reader: R) -> Result<usize> {
-    //    let input: Input = Input::parse(reader)?;
-    //    let mut res = 0;
-    //    // TODO
-    //    Ok(res)
-    // }
-    //
-    // assert_eq!(0, part2(BufReader::new(TEST.as_bytes()))?);
-    //
-    // let input_file = BufReader::new(File::open(INPUT_FILE)?);
-    // let result = time_snippet!(part2(input_file)?);
-    // println!("Result = {}", result);
+    println!("\n=== Part 2 ===");
+
+    fn part2<R: BufRead>(reader: R) -> Result<usize> {
+        let input: Input = Input::parse(reader)?;
+
+        let n = input.0.len();
+        let res = input
+            .0
+            .iter()
+            .enumerate()
+            .filter(|(i, _)| *i >= 1 && *i < n - 1)
+            .map(|(i, v)| {
+                v.iter()
+                    .enumerate()
+                    .filter(|(j, c)| **c == 'A' && *j >= 1 && *j < n - 1)
+                    .filter_map(|(j, _)| {
+                        let no = input.0[i - 1][j - 1];
+                        let se = input.0[i + 1][j + 1];
+                        let ne = input.0[i - 1][j + 1];
+                        let so = input.0[i + 1][j - 1];
+                        if (no == 'M' && se == 'S' || no == 'S' && se == 'M')
+                            && (ne == 'M' && so == 'S' || ne == 'S' && so == 'M')
+                        {
+                            return Some(true);
+                        }
+                        None
+                    })
+                    .count()
+            })
+            .sum();
+
+        Ok(res)
+    }
+
+    assert_eq!(9, part2(BufReader::new(TEST.as_bytes()))?);
+
+    let input_file = BufReader::new(File::open(INPUT_FILE)?);
+    let result = time_snippet!(part2(input_file)?);
+    println!("Result = {}", result);
     //endregion
 
     Ok(())
