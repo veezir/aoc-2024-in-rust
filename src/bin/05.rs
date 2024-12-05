@@ -4,14 +4,24 @@ use code_timing_macros::time_snippet;
 use const_format::concatcp;
 use itertools::Itertools;
 use std::cmp::Ordering;
-use std::collections::BTreeSet;
 use std::fs::File;
 use std::io::{BufRead, BufReader};
 
-#[derive(Default, Clone, Debug, PartialEq, Eq)]
+const SIZE: usize = 100;
+
+#[derive(Clone, Debug, PartialEq, Eq)]
 struct Input {
-    rules: BTreeSet<(usize, usize)>,
+    rules: [bool; SIZE * SIZE],
     records: Vec<Vec<usize>>,
+}
+
+impl Default for Input {
+    fn default() -> Self {
+        Input {
+            rules: [false; SIZE * SIZE],
+            records: Vec::new(),
+        }
+    }
 }
 
 impl Input {
@@ -25,12 +35,12 @@ impl Input {
             if line.is_empty() {
                 records = true;
             } else if !records {
-                input.rules.insert(
-                    line.split('|')
-                        .map(|s| s.parse::<usize>().unwrap())
-                        .collect_tuple()
-                        .unwrap(),
-                );
+                let (pred, succ) = line
+                    .split('|')
+                    .map(|s| s.parse::<usize>().unwrap())
+                    .collect_tuple()
+                    .unwrap();
+                input.rules[SIZE * pred + succ] = true;
             } else {
                 input.records.push(
                     line.split(',')
@@ -90,7 +100,7 @@ fn main() -> Result<()> {
             .records
             .iter()
             .filter_map(|v| {
-                if v.windows(2).all(|p| !input.rules.contains(&(p[1], p[0]))) {
+                if v.windows(2).all(|p| !input.rules[p[1] * SIZE + p[0]]) {
                     Some(v[v.len() / 2])
                 } else {
                     None
@@ -116,13 +126,13 @@ fn main() -> Result<()> {
         let res = input
             .records
             .iter()
-            .filter(|v| v.windows(2).any(|p| input.rules.contains(&(p[1], p[0]))))
+            .filter(|v| v.windows(2).any(|p| input.rules[p[1] * SIZE + p[0]]))
             .map(|v| {
                 *v.clone()
                     .select_nth_unstable_by(v.len() / 2, |&i, &j| {
-                        if input.rules.contains(&(i, j)) {
+                        if input.rules[i * SIZE + j] {
                             Ordering::Less
-                        } else if input.rules.contains(&(j, i)) {
+                        } else if input.rules[j * SIZE + i] {
                             Ordering::Greater
                         } else {
                             Ordering::Equal
