@@ -122,23 +122,23 @@ fn main() -> Result<()> {
     println!("\n=== Part 2 ===");
 
     fn part2<R: BufRead>(reader: R) -> Result<usize> {
-        let input: Input = Input::parse(reader)?;
+        let mut input: Input = Input::parse(reader)?;
         let res = input
             .records
-            .iter()
+            .iter_mut()
             .filter(|v| v.windows(2).any(|p| input.rules[p[1] * SIZE + p[0]]))
             .map(|v| {
-                *v.clone()
-                    .select_nth_unstable_by(v.len() / 2, |&i, &j| {
-                        if input.rules[i * SIZE + j] {
-                            Ordering::Less
-                        } else if input.rules[j * SIZE + i] {
-                            Ordering::Greater
-                        } else {
-                            Ordering::Equal
-                        }
-                    })
-                    .1
+                let len = v.len();
+                *v.select_nth_unstable_by(len / 2, |&i, &j| {
+                    if input.rules[i * SIZE + j] {
+                        Ordering::Less
+                    } else if input.rules[j * SIZE + i] {
+                        Ordering::Greater
+                    } else {
+                        Ordering::Equal
+                    }
+                })
+                .1
             })
             .sum::<usize>();
         Ok(res)
