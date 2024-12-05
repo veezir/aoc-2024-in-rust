@@ -3,6 +3,7 @@ use anyhow::*;
 use code_timing_macros::time_snippet;
 use const_format::concatcp;
 use itertools::Itertools;
+use std::cmp::Ordering;
 use std::collections::BTreeSet;
 use std::fs::File;
 use std::io::{BufRead, BufReader};
@@ -108,20 +109,36 @@ fn main() -> Result<()> {
     //endregion
 
     //region Part 2
-    // println!("\n=== Part 2 ===");
-    //
-    // fn part2<R: BufRead>(reader: R) -> Result<usize> {
-    //    let input: Input = Input::parse(reader)?;
-    //    let mut res = 0;
-    //    // TODO
-    //    Ok(res)
-    // }
-    //
-    // assert_eq!(0, part2(BufReader::new(TEST.as_bytes()))?);
-    //
-    // let input_file = BufReader::new(File::open(INPUT_FILE)?);
-    // let result = time_snippet!(part2(input_file)?);
-    // println!("Result = {}", result);
+    println!("\n=== Part 2 ===");
+
+    fn part2<R: BufRead>(reader: R) -> Result<usize> {
+        let input: Input = Input::parse(reader)?;
+        let res = input
+            .records
+            .iter()
+            .filter(|v| v.windows(2).any(|p| input.rules.contains(&(p[1], p[0]))))
+            .map(|v| {
+                let mut vv = v.clone();
+                vv.sort_by(|&i, &j| {
+                    if input.rules.contains(&(i, j)) {
+                        Ordering::Less
+                    } else if input.rules.contains(&(j, i)) {
+                        Ordering::Greater
+                    } else {
+                        Ordering::Equal
+                    }
+                });
+                *vv.get(v.len() / 2).unwrap()
+            })
+            .sum::<usize>();
+        Ok(res)
+    }
+
+    assert_eq!(123, part2(BufReader::new(TEST.as_bytes()))?);
+
+    let input_file = BufReader::new(File::open(INPUT_FILE)?);
+    let result = time_snippet!(part2(input_file)?);
+    println!("Result = {}", result);
     //endregion
 
     Ok(())
