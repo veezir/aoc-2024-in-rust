@@ -118,17 +118,17 @@ fn main() -> Result<()> {
             .iter()
             .filter(|v| v.windows(2).any(|p| input.rules.contains(&(p[1], p[0]))))
             .map(|v| {
-                let mut vv = v.clone();
-                vv.sort_by(|&i, &j| {
-                    if input.rules.contains(&(i, j)) {
-                        Ordering::Less
-                    } else if input.rules.contains(&(j, i)) {
-                        Ordering::Greater
-                    } else {
-                        Ordering::Equal
-                    }
-                });
-                *vv.get(v.len() / 2).unwrap()
+                *v.clone()
+                    .select_nth_unstable_by(v.len() / 2, |&i, &j| {
+                        if input.rules.contains(&(i, j)) {
+                            Ordering::Less
+                        } else if input.rules.contains(&(j, i)) {
+                            Ordering::Greater
+                        } else {
+                            Ordering::Equal
+                        }
+                    })
+                    .1
             })
             .sum::<usize>();
         Ok(res)
