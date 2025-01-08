@@ -29,19 +29,21 @@ impl Input {
     }
 
     fn blink_one_stone(key: usize, value: usize) -> HashMap<usize, usize> {
-        if key == 0 {
-            return HashMap::from([(1, value)]);
-        }
-        let digits = ((key as f64).log10().floor() as usize) + 1;
-        if digits % 2 == 0 {
-            let half_digits: u32 = (digits / 2) as u32;
-            let div = 10_usize.pow(half_digits);
-            let mut map = HashMap::new();
-            map.insert(key / div, value);
-            *map.entry(key % div).or_insert(0) += value;
-            map
-        } else {
-            HashMap::from([(2024 * key, value)])
+        match key {
+            0 => HashMap::from([(1, value)]),
+            _ => {
+                let digits = ((key as f64).log10().floor() as usize) + 1;
+                if digits % 2 == 0 {
+                    let half_digits: u32 = (digits / 2) as u32;
+                    let div = 10_usize.pow(half_digits);
+                    let mut map = HashMap::new();
+                    map.insert(key / div, value);
+                    *map.entry(key % div).or_insert(0) += value;
+                    map
+                } else {
+                    HashMap::from([(2024 * key, value)])
+                }
+            }
         }
     }
 
@@ -57,9 +59,9 @@ impl Input {
     }
 
     fn blink_several_times(&mut self, n: usize) {
-        for _i in (0..n) {
-            //println!("Generation {} : {:?}", _i + 1, self.0);
+        for _i in 0..n {
             self.blink();
+            //println!("Generation {} : {:?}", _i + 1, self.0);
         }
     }
 }
