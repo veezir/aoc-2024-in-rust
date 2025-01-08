@@ -22,7 +22,6 @@ enum Direction {
 }
 
 impl Direction {
-
     fn as_pair(&self) -> (isize, isize) {
         match self {
             Direction::TOP => (-1, 0),
@@ -38,6 +37,7 @@ struct Input {
     states: Vec<Vec<State>>,
     position: (usize, usize),
     direction: Direction,
+    initial_position: (usize, usize),
 }
 
 impl Input {
@@ -53,6 +53,7 @@ impl Input {
                 .map(|(j, c)| match c {
                     '^' => {
                         input.position = (i.try_into().unwrap(), j.try_into().unwrap());
+                        input.initial_position = (i.try_into().unwrap(), j.try_into().unwrap());
                         State::VISITED
                     }
                     '#' => State::OBSTACLE,
@@ -93,6 +94,14 @@ impl Input {
             == State::OBSTACLE
     }
 
+    fn advance_and_update(&mut self) -> bool {
+        let res = self.advance();
+        if res {
+            self.update_state();
+        }
+        res
+    }
+
     fn advance(&mut self) -> bool {
         while self.can_advance() && self.is_obstacle_front() {
             self.turn();
@@ -106,12 +115,29 @@ impl Input {
             (self.position.0 as isize + pair.0) as usize,
             (self.position.1 as isize + pair.1) as usize,
         );
-        self.update_state();
         true
     }
 
     fn update_state(&mut self) {
         self.states[self.position.0][self.position.1] = State::VISITED;
+    }
+
+    fn is_loop(&mut self) -> bool {
+        while self.advance() {
+            if self.position == self.initial_position && self.direction == Direction::TOP {
+                return true;
+            }
+        }
+        false
+    }
+
+    fn add_obstacle(&mut self, i: usize, j: usize) {
+        self.states[i][j] = State::OBSTACLE;
+    }
+    fn remove_obstacle_and_reset(&mut self, i: usize, j: usize) {
+        self.states[i][j] = State::FREE;
+        self.position = self.initial_position;
+        self.direction = Direction::default();
     }
 }
 
@@ -139,7 +165,7 @@ fn main() -> Result<()> {
 
     fn part1<R: BufRead>(reader: R) -> Result<usize> {
         let mut input: Input = Input::parse(reader)?;
-        while input.advance() {}
+        while input.advance_and_update() {}
         let res = input
             .states
             .iter()
@@ -157,20 +183,34 @@ fn main() -> Result<()> {
     //endregion
 
     //region Part 2
-    // println!("\n=== Part 2 ===");
-    //
-    // fn part2<R: BufRead>(reader: R) -> Result<usize> {
-    //    let input: Input = Input::parse(reader)?;
-    //    let mut res = 0;
-    //    // TODO
-    //    Ok(res)
-    // }
-    //
-    // assert_eq!(0, part2(BufReader::new(TEST.as_bytes()))?);
-    //
-    // let input_file = BufReader::new(File::open(INPUT_FILE)?);
-    // let result = time_snippet!(part2(input_file)?);
-    // println!("Result = {}", result);
+    println!("\n=== Part 2 ===");
+
+    fn part2<R: BufRead>(reader: R) -> Result<usize> {
+        let mut input: Input = Input::parse(reader)?;
+        let n = input.states.len();
+        let m = input.states[0].len();
+        let mut res = 0;
+        for i in 0..n {
+            for j in 0..m {
+                if input.states[i][j] == State::FREE && input.initial_position != (i, j) {
+                    input.add_obstacle(i, j);
+                    //res += input.is_loop() as usize;
+                    if input.is_loop() {
+                        res += 1;
+                        println!("{}{}", i, j);
+                    }
+                    input.remove_obstacle_and_reset(i, j);
+                }
+            }
+        }
+        Ok(res)
+    }
+
+    assert_eq!(6, part2(BufReader::new(TEST.as_bytes()))?);
+
+    let input_file = BufReader::new(File::open(INPUT_FILE)?);
+    let result = time_snippet!(part2(input_file)?);
+    println!("Result = {}", result);
     //endregion
 
     Ok(())
